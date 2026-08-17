@@ -1,0 +1,142 @@
+% \todo[inline, color=green]{Talvez reescrever um pouco. Diria que duas modernizações relevantes sob a perspectiva de melhorar a legibilidade de código e no caso de possibilitar a detecção de erros de tipos via a integração de ferramentas de análise estática \ldots. Como \spm não são tão usadas, acho que relevante é muito forte.}
+% \todo[inline, color=green]{Acho que ao longo desta seção II, deveríamos contextualizar a pesquisa anterior, e deixar claro que esse trabalho de Iniciação Científica se aprofundou para explorar aspectos qualitativos não investigados no trabalho anterior. Apesar disso já ter sido discutido na introdução, é super inportante reforçar aqui em Background.}
+% \todo[inline]{Em todo o texto, sempre que possível eu utilizaria o termo transformation ou source code transformation, no lugar de refactoring.}
+
+Python has continuously evolved by introducing language features intended to improve software maintainability and supporting large-scale software development. Among these, \ths were introduced to improve code readability, standardize the specification of type information, and enable the detection of type-related issues through integration with static analysis tools. In our previous work, we quantitatively investigated large-scale \ths adoption by mining software repositories and identifying commits involving extensive type-related source code transformations. Although that study characterized how these transformations occur in practice, it did not investigate the motivations, decision-making processes, or development practices underlying them. This paper extends that work through a qualitative, developer-centered investigation based on survey responses and artifact triangulation.
+
+\subsection{Type Hints}\label{subsec:ths}
+
+Type Hints were standardized in PEP 484~\cite{pep484} as part of Python's gradual typing system to address the lack of a standardized mechanism for expressing type information in Python programs. Prior to their adoption, developers relied on heterogeneous approaches, including decorators, docstrings, and conventions implemented by third-party libraries, resulting in incompatible annotation styles and limited interoperability among tools~\cite{pep3107}. This lack of standardization also hindered IDE support and automated source code transformation capabilities.
+
+PEP 484 established a common vocabulary for annotating function parameters, return types, and variables, enabling external tools to perform offline static analysis while preserving Python's dynamically typed nature~\cite{pep484}. Subsequent proposals, including PEP 526~\cite{pep526} and PEP 585~\cite{pep585}, extended typing support by introducing native variable annotations and built-in generic types. In particular, PEP 526 replaced comment-based annotations (e.g., \texttt{\# type: annotation}), which suffered from readability limitations, artificial variable initializations, and poor accessibility for automated tools~\cite{pep526}.
+
+Unlike statically typed languages, Python does not use type annotations during runtime. Instead, they provide semantic information for external tools such as MyPy and Pyright, which exploit them for offline static analysis, code completion, navigation, and automated source code transformations~\cite{pep484}. Previous work also reports benefits including earlier bug detection, improved software quality, and better software maintenance activities~\cite{10.1145/3426422.3426981}. Importantly, Type Hints remain entirely optional, preserving Python's dynamically typed execution model while enabling optional analysis and validation by external tools and libraries~\cite{pep484,pep526}, as illustrated in Figure~\ref{lst:pep484_greeting}.
+
+\begin{listing}[h]
+\caption{Example of a function with Type Hints in Python (PEP 484~\cite{pep484}).}
+\label{lst:pep484_greeting}
+
+\begin{minted}[frame=single, fontsize=\small]{python}
+def greeting(name: str) -> str:
+    return 'Hello ' + name
+\end{minted}
+\end{listing}
+% \ths were standardized in PEP 484~\cite{pep484} as part of Python's gradual typing system. They allow developers to incrementally annotate variables, function parameters, and return types with optional type information, enabling static analysis and improving maintainability. Additional proposals, such as PEP 526~\cite{pep526} and PEP 585~\cite{pep585}, further extended typing support by introducing variable annotations and built-in generic types.
+
+% \todo[inline]{Também tomaria cuidado com essa expressão 'type-checking at runtime'. Python faz verificação de tipos em tempo de execução, não estaticamente. Talvez indicar que as anotações de tipos não são consideradas em tempo de execução. Concordam? Podemos discutir isso amanhã.}
+
+% Unlike statically typed languages, Python does not enforce type checking at runtime. Instead, type annotations are mainly used by external tools such as MyPy and Pyright to support static analysis, autocompletion, and error detection. Prior studies also suggest that type hints can improve software quality and maintenance activities~\cite{10.1145/3426422.3426981}.
+
+%\subsection{Structural Pattern Matching}\label{subsec:spm}
+
+% \spm was introduced in Python 3.10 through PEP 634~\cite{pep634}. The feature extends Python with the \texttt{match/case} construct, allowing developers to express conditional logic through structural patterns rather than traditional \texttt{if-elif-else} chains.
+
+% Besides improving readability, \spm enables declarative inspection and deconstruction of structured data, supporting patterns such as literals, sequences, and guarded expressions~\cite{10.1145/3426422.3426983}.% Figure~\ref{fig:spm_examples} illustrates examples of value matching and structural decomposition using \texttt{match/case}.
+
+% \begin{figure}[htb]
+% \centering
+% \begin{minipage}[t]{0.48\textwidth}
+% \begin{minted}[fontsize=\scriptsize, frame=single]{python}
+% def fact(arg: int) -> int:
+%     match arg:
+%         case 0 | 1:
+%             f: int = 1
+%         case n:
+%             f: int = n * fact(n - 1)
+%     return f
+% \end{minted}
+% \centering
+% \scriptsize (a) Pattern matching example for factorial
+% \end{minipage}
+% \hfill
+% \begin{minipage}[t]{0.48\textwidth}
+% \begin{minted}[fontsize=\scriptsize, frame=single]{python}
+% def sum(seq):
+%     match seq:
+%         case []:
+%             s = 0
+%         case [hd, *tl]:
+%             s = hd + sum(tl)
+%     return s
+% \end{minted}
+% \centering
+% \scriptsize (b) Structural deconstruction using \spm
+% \end{minipage}
+% \caption{Examples of Structural Pattern Matching in Python.}
+% \Description{
+% Examples of Structural Pattern Matching in Python showing factorial
+% computation and recursive list summation.
+% }
+% \label{fig:spm_examples}
+% \end{figure}
+
+\subsection{Program Transformations}
+\label{subsec:transformations}
+
+In this study, we investigate source code transformations involving Python type annotations. These transformations include the introduction, removal, and modification of type annotations in variables, function parameters, and return types, reflecting how developers evolve typing information as projects adopt modern Python features. By analyzing these transformations, we investigate the motivations, practices, and decision-making processes underlying large-scale software modernization.
+
+% We also analyze transformations involving \spm, particularly the replacement of traditional \texttt{if-elif-else} chains with \texttt{match/case} constructs, and the reverse operation. Such transformations reflect modernization efforts aiming to improve readability and maintainability of conditional logic.
+
+%In addition to fine-grained transformations, we derive function-level annotation completeness categories, distinguishing between fully annotated signatures and partially annotated functions. These categories help characterize the gradual adoption process of typing information in Python projects.
+
+\subsection{Large-Scale Modernization}
+\label{subsec:large-scale-modernization}
+
+% As an illustrative example of a large-scale modernization effort, we inspected commit \texttt{9c8557a} from the \texttt{chia-blockchain} project, which contains 6,421 detected type-related transformations. This is the largest commit in the dataset we built in our previous work, and alone accounts for 6.47\% of all detected transformations. The commit corresponds to a systematic migration of legacy type annotations from the \texttt{typing} module to the built-in generic types introduced in Python 3.9 (PEP 585 \cite{pep585}).
+
+% The changes were performed consistently across the codebase and primarily involve replacing legacy constructs such as \texttt{List}, \texttt{Dict}, and \texttt{Tuple} with their built-in counterparts (\texttt{list}, \texttt{dict}, and \texttt{tuple}). This example illustrates how Python modernization efforts may be conducted through large-scale refactoring campaigns affecting thousands of annotation occurrences within a single commit.
+
+Large-scale modernization refers to systematic source code transformations that affect many locations across a codebase within a single development effort. Such transformations are commonly associated with software reengineering and automated program transformation, particularly when their scale makes manual application impractical\cite{AKERS2007275}. These efforts may be motivated by the adoption of newer language features, improvements in code quality, and keep projects aligned with the evolution of the programming language. Figure~\ref{fig:modernization-example} illustrates a representative example from the \texttt{aiohttp} project (commit 35754d4), where type annotations were consistently updated across the repository by replacing legacy typing constructs with their modern counterparts, such as migrating generic types introduced by PEP 585~\cite{pep585}, simplifying optional types using PEP 604~\cite{pep604}, and updating imports according to current Python recommendations. This example highlights how software modernization is often performed through coordinated, repository-wide transformations.
+
+% \todo[inline, color=green]{Talvez fosse mais interessante mostrar um diff de uma parte pequena do código, em vez desta tabela. O artigo anterior deve ter um exemplo.}
+
+
+\begin{figure}[H]
+\begin{minted}[fontsize=\small]{diff}
+--- a/aiohttp/_cookie_helpers.py    (Python 3.8 style)
++++ b/aiohttp/_cookie_helpers.py    (Python 3.9+ style)
+@@ -6,6 +6,7 @@
+import re
++from collections.abc import Sequence
+from http.cookies import Morsel
+-from typing import List, Optional, Sequence, Tuple, cast
++from typing import cast
+
+@@ -159,9 +160,9 @@
+def parse_cookie_header(header: str) ->
+-   List[Tuple[str, Morsel[str]]]:
++   list[tuple[str, Morsel[str]]]:
+     ...                                                                         
+-    cookies: List[Tuple[str, Morsel[str]]] = []
++    cookies: list[tuple[str, Morsel[str]]] = []
+       ...
+-    current_morsel: Optional[Morsel[str]] = None
++    current_morsel: Morsel[str] | None = None
+\end{minted}
+\caption{Python type annotation modernization in \texttt{aiohttp} (commit \texttt{35754d4}).}
+\label{fig:modernization-example}
+\end{figure}
+
+% Table~\ref{tab:chia_commit} summarizes the most frequent transformations identified in this commit.
+
+% \begin{table}[htb]
+% \caption{Most frequent type annotation transformations in commit \texttt{9c8557a} (\texttt{chia-blockchain}).}
+% \label{tab:chia_commit}
+% \centering
+% \begin{tabular}{lrr}
+% \toprule
+% \textbf{Transformation} & \textbf{Removed} & \textbf{Added} \\
+% \midrule
+% \texttt{List} $\rightarrow$ \texttt{list}   & 2,820 & 2,822 \\
+% \texttt{Dict} $\rightarrow$ \texttt{dict}   & 1,839 & 1,840 \\
+% \texttt{Tuple} $\rightarrow$ \texttt{tuple} & 1,080 & 1,082 \\
+% \bottomrule
+% \end{tabular}
+% \end{table}
+
+\subsection{Foundation Models}
+\label{subsec:foundation-models}
+
+Foundation models are large-scale machine learning models trained on broad and diverse datasets and designed to support a wide range of downstream tasks through adaptation or direct use~\cite{DBLP:journals/corr/abs-2108-07258}. Unlike models developed for a single predefined task, foundation models provide general-purpose capabilities that can be reused across different application domains. Recent advances in the scale of training data, model architectures, and computational resources have enabled foundation models to perform increasingly diverse tasks involving natural language, code, images, and other modalities.
+
+In software development, foundation models trained on source code and natural language have enabled new forms of programming assistance, including code generation, code completion, explanation, summarization, and source code transformation. Large language models (LLMs) are a prominent class of foundation models that can process and generate natural language and programming languages, allowing developers to interact with them using natural-language instructions. These capabilities have introduced new possibilities for automating or assisting software engineering activities, while still requiring developers to validate and integrate the generated results into existing development workflows.
